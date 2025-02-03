@@ -16,9 +16,9 @@ public class PantallaEncriptar {
             Cifrado cifrado = new Cifrado();
             cifrado.setPathArchivoOrigen(ManejadorArchivo.buscarRutaArchivo(ruta));
 
-            cifrado.encriptar();
-            System.out.println("\nClave de encriptado: " + cifrado.getKey());
-
+            //cifrado.encriptar();
+            //System.out.println("\nClave de encriptado: " + cifrado.getKey());
+            cifrado.encriptarFileChanel();
         }
         catch (NoSuchElementException e){
             System.out.println(e.getMessage());

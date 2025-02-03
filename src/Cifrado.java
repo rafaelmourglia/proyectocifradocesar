@@ -1,5 +1,6 @@
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -77,16 +78,23 @@ public class Cifrado {
 
     public void encriptarFileChanel(){
         generarClave();
-        try(FileChannel inputChannel = FileChannel.open(this.pathArchivoOrigen)) {
-            ByteBuffer buffer = ByteBuffer.allocate(1024);
-            while (inputChannel.read(buffer) > 0){
-//                buffer.flip();
-//                FileChannel outChannel = FileChannel.open(Paths.get(getNewFileName(fileName, fileNumber)), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE);
-//                outChannel.write(buffer);
-//
-//                buffer.clear();
-            }
+        try(FileChannel inputChannel = FileChannel.open(this.pathArchivoOrigen);
+            FileChannel outChannel = FileChannel.open(Paths.get("c:\\test\\salida.txt"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
 
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+            StringBuilder content = new StringBuilder();
+            while (inputChannel.read(buffer) > 0){
+                buffer.flip();
+                String data = new String(buffer.array(), buffer.position(), buffer.remaining(), Charset.forName("UTF-8"));
+                content.append(data);
+
+
+                outChannel.write(buffer);
+
+                buffer.clear();
+            }
+            System.out.println("Mostrar texto: ");
+            System.out.println(content);
 
 //            lineas.forEach(linea -> {
 //                int iFrom; //Especifica el índice desde donde se obtendrá el caracter cifrado
