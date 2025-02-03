@@ -20,7 +20,10 @@ public class Main {
                 case 1:
                     PantallaEncriptar enc = new PantallaEncriptar(scanner);
                     enc.iniciarEncriptado();
-
+                    break;
+                case 2:
+                    PantallaEncriptar dec = new PantallaEncriptar(scanner);
+                    dec.iniciarDesencriptado(scanner);
                     break;
                 case 0:
                     System.out.println("Cerrando programa...\nHasta la próxima!");

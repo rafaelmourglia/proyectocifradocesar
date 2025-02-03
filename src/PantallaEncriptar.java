@@ -1,4 +1,3 @@
-import java.io.IOException;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
@@ -17,16 +16,19 @@ public class PantallaEncriptar {
             cifrado.setPathArchivoOrigen(ManejadorArchivo.buscarRutaArchivo(ruta));
 
             //cifrado.encriptar();
-            //System.out.println("\nClave de encriptado: " + cifrado.getKey());
+            System.out.println("\nClave de encriptado: " + cifrado.getKey());
             cifrado.encriptarFileChanel();
         }
         catch (NoSuchElementException e){
             System.out.println(e.getMessage());
         }
-        catch (Exception e){
-            System.out.println(e.getMessage());
-        }
 
+    }
+
+    public void iniciarDesencriptado(Scanner scanner){
+        System.out.println("Clave para desencriptar: ");
+        Cifrado cifrado = new Cifrado(scanner.nextInt());
+        cifrado.decryptFileChanel();
     }
 
 }

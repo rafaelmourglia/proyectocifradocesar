@@ -1,18 +1,24 @@
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Random;
-import java.util.stream.Stream;
 
 public class Cifrado {
     private final String ALPHABET = "abcdefghijklmnñopqrstuvwxyzáéíóúABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚ ,.;:¿¡?!$=";
     private Path pathArchivoOrigen;
     private Path pathArtchivoDestino;
     private int key;
+
+    public Cifrado(){
+        generarClave();
+    }
+
+    public Cifrado(int key){
+        this.key = key;
+    }
     public Path getPathArchivoOrigen() {
         return pathArchivoOrigen;
     }
@@ -45,17 +51,19 @@ public class Cifrado {
      * índice i del alfabeto, devuelve el caracter que se encuentra en el índice i+shift.
      * @return Texto encriptado aplicando cifrado César con clave shift
      */
-    public void encriptar(){
-        generarClave();
-        try(Stream<String> lineas = Files.lines(pathArchivoOrigen);) {
+    public StringBuilder encriptar(String linea){
+        //generarClave();
 
-            lineas.forEach(linea -> {
+        try {
+            StringBuilder lineaEncriptada = new StringBuilder();
+            //lineas.forEach(linea -> {
                 int iFrom; //Especifica el índice desde donde se obtendrá el caracter cifrado
                 for (char c : linea.toCharArray()) {
                     //Si el caracter no existe en el alfabeto, se ignora y se agrega a la salida
                     //sin encriptar.
                     if (ALPHABET.indexOf(c) == -1) {
-                        System.out.print(c);
+                        //System.out.print(c);
+                        lineaEncriptada.append(c);
                     } else {
                         //Se obtiene el índice que corresponde al caracter actual y se le suma key para
                         //sustituir por el que se encuentra key posiciones a la izquierda del alfabeto.
@@ -65,57 +73,36 @@ public class Cifrado {
                         if (iFrom > getMaxChars() - 1) {
                             iFrom = iFrom - getMaxChars();
                         }
-                        System.out.print(ALPHABET.charAt(iFrom));
+                        //System.out.print(ALPHABET.charAt(iFrom));
+                        lineaEncriptada.append(ALPHABET.charAt(iFrom));
                     }
                 }
-            });
+            //});
+            return lineaEncriptada;
         }catch (Exception e){
             e.printStackTrace();
         }
-
+        return null;
     }
 
 
     public void encriptarFileChanel(){
-        generarClave();
         try(FileChannel inputChannel = FileChannel.open(this.pathArchivoOrigen);
             FileChannel outChannel = FileChannel.open(Paths.get("c:\\test\\salida.txt"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
 
             ByteBuffer buffer = ByteBuffer.allocate(1024);
-            StringBuilder content = new StringBuilder();
+            StringBuilder content;
             while (inputChannel.read(buffer) > 0){
                 buffer.flip();
                 String data = new String(buffer.array(), buffer.position(), buffer.remaining(), Charset.forName("UTF-8"));
-                content.append(data);
+                //content.append(data);
+                content = encriptar(data);
 
 
-                outChannel.write(buffer);
+                outChannel.write(ByteBuffer.wrap(content.toString().getBytes()));
 
                 buffer.clear();
             }
-            System.out.println("Mostrar texto: ");
-            System.out.println(content);
-
-//            lineas.forEach(linea -> {
-//                int iFrom; //Especifica el índice desde donde se obtendrá el caracter cifrado
-//                for (char c : linea.toCharArray()) {
-//                    //Si el caracter no existe en el alfabeto, se ignora y se agrega a la salida
-//                    //sin encriptar.
-//                    if (ALPHABET.indexOf(c) == -1) {
-//                        System.out.print(c);
-//                    } else {
-//                        //Se obtiene el índice que corresponde al caracter actual y se le suma key para
-//                        //sustituir por el que se encuentra key posiciones a la izquierda del alfabeto.
-//                        iFrom = ALPHABET.indexOf(c) + this.key;
-//
-//                        //Si el índice
-//                        if (iFrom > getMaxChars() - 1) {
-//                            iFrom = iFrom - getMaxChars();
-//                        }
-//                        System.out.print(ALPHABET.charAt(iFrom));
-//                    }
-//                }
-//            });
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -150,6 +137,28 @@ public class Cifrado {
 
         }
         return out;
+    }
+
+    public void decryptFileChanel(){
+        try(FileChannel inputChannel = FileChannel.open(Paths.get("c:\\test\\salida.txt"))) {
+
+            ByteBuffer buffer = ByteBuffer.allocate(1024);
+            StringBuilder content = new StringBuilder();
+            while (inputChannel.read(buffer) > 0){
+                buffer.flip();
+                String data = new String(buffer.array(), buffer.position(), buffer.remaining(), Charset.forName("UTF-8"));
+                //content.append(data);
+                content.append(decrypt(data, this.key));
+
+
+                //outChannel.write(ByteBuffer.wrap(content.toString().getBytes()));
+
+                buffer.clear();
+            }
+            System.out.println(content);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     public String forzar(String text, int limit){
