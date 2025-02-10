@@ -2,7 +2,7 @@ import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 public class PantallaEncriptar {
-    private Scanner scanner;
+    private final Scanner scanner;
 
     public  PantallaEncriptar(Scanner scanner){
         this.scanner = scanner;
@@ -17,7 +17,7 @@ public class PantallaEncriptar {
 
             //cifrado.encriptar();
             System.out.println("\nClave de encriptado: " + cifrado.getKey());
-            cifrado.encriptarFileChanel();
+            cifrado.encriptarArchivo();
         }
         catch (NoSuchElementException e){
             System.out.println(e.getMessage());
@@ -25,10 +25,26 @@ public class PantallaEncriptar {
 
     }
 
-    public void iniciarDesencriptado(Scanner scanner){
-        System.out.println("Clave para desencriptar: ");
-        Cifrado cifrado = new Cifrado(scanner.nextInt());
-        cifrado.decryptFileChanel();
+    public void iniciarDesencriptado(){
+//        System.out.println("Ruta del ");
+//        System.out.println("Clave para desencriptar: ");
+//        Cifrado cifrado = new Cifrado(scanner.nextInt());
+//        cifrado.desencriptarArchivo();
+
+        try{
+            System.out.println("Ingrese una ruta válida del archivo a desencriptar: ");
+            scanner.nextLine();
+            String ruta = scanner.nextLine();
+
+//            System.out.println("Clave para desencriptar: ");
+            Cifrado cifrado = new Cifrado(0);
+            cifrado.setPathArchivoOrigen(ManejadorArchivo.buscarRutaArchivo(ruta));
+            System.out.println("\nDesencriptando: ");
+            System.out.println("\nArchivo desencriptado: " + cifrado.desencriptarFuerzaBruta());
+        }
+        catch (NoSuchElementException e){
+            System.out.println(e.getMessage());
+        }
     }
 
 }

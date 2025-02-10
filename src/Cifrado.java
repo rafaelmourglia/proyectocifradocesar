@@ -4,18 +4,46 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Random;
+import java.util.*;
 
 public class Cifrado {
     private final String ALPHABET = "abcdefghijklmnñopqrstuvwxyzáéíóúABCDEFGHIJKLMNÑOPQRSTUVWXYZÁÉÍÓÚ ,.;:¿¡?!$=";
+    private final String NOMBRE_ARCHIVO_DESTINO = "encriptado.txt";
     private Path pathArchivoOrigen;
     private Path pathArtchivoDestino;
     private int key;
 
+    public HashSet diccionario(){
+        HashSet diccionario = new HashSet<>(Arrays.asList(
+                "el", "la", "de", "que", "y", "en", "a", "los", "se", "del", "las", "por",
+                "un", "para", "con", "no", "una", "su", "al", "es", "lo", "como", "más",
+                "pero", "sus", "le", "ya", "o", "fue", "este", "ha", "sí", "porque",
+                "esta", "entre", "cuando", "muy", "sin", "sobre", "también", "me",
+                "hasta", "hay", "donde", "quien", "desde", "todo", "nos", "durante",
+                "todos", "uno", "les", "ni", "contra", "otros", "ese", "eso", "ante",
+                "ellos", "esto", "mí", "antes", "algunos", "qué", "unos", "yo", "otro",
+                "otras", "otra", "él", "tanto", "esa", "estos", "tan", "luego", "cerca",
+                "ahí", "tiempo", "aún", "manera", "cada", "siempre", "solo", "palabras",
+                "nunca", "día", "ahora", "así", "después", "vida", "parte", "mundo",
+                "casa", "cosas", "lugar", "año", "caso", "gran", "poco", "agua",
+                "nuevo", "mujer", "hombre", "gente", "noche", "país", "trabajo",
+                "ciudad", "grupo", "historia", "cuenta", "medio", "ejemplo", "amigo",
+                "escuela", "forma", "familia", "número", "fuerza", "sistema", "niño", "niña",
+                "madre", "padre", "centro", "equipo", "tarde", "amor", "gobierno",
+                "programa", "sociedad", "perro", "gato", "tarde"
+        ));
+        return diccionario;
+
+    }
+
+    //Al crear un constructor sin parámetros se genera una clave de encriptado de forma automática y se guarda en key
+    //Se utiliza especialmente cuando se crea un objeto Cifrado para encriptar.
     public Cifrado(){
         generarClave();
     }
 
+    //El constructor pide un parametro key cuando se conoce la clave.
+    //Se utiliza especialmente cuando se crea un objeto Cifrado para desencriptar.
     public Cifrado(int key){
         this.key = key;
     }
@@ -24,16 +52,15 @@ public class Cifrado {
     }
 
     public void setPathArchivoOrigen(Path pathArchivoOrigen) {
+
         this.pathArchivoOrigen = pathArchivoOrigen;
+        this.pathArtchivoDestino = ManejadorArchivo.cambiarNombreArchivo(this.pathArchivoOrigen, NOMBRE_ARCHIVO_DESTINO);
     }
 
     public Path getPathArtchivoDestino() {
         return pathArtchivoDestino;
     }
 
-    public void setPathArtchivoDestino(Path pathArtchivoDestino) {
-        this.pathArtchivoDestino = pathArtchivoDestino;
-    }
 
 
 
@@ -51,10 +78,8 @@ public class Cifrado {
      * índice i del alfabeto, devuelve el caracter que se encuentra en el índice i+shift.
      * @return Texto encriptado aplicando cifrado César con clave shift
      */
-    public StringBuilder encriptar(String linea){
-        //generarClave();
-
-        try {
+    private StringBuilder encriptar(String linea){
+         try {
             StringBuilder lineaEncriptada = new StringBuilder();
             //lineas.forEach(linea -> {
                 int iFrom; //Especifica el índice desde donde se obtendrá el caracter cifrado
@@ -62,7 +87,6 @@ public class Cifrado {
                     //Si el caracter no existe en el alfabeto, se ignora y se agrega a la salida
                     //sin encriptar.
                     if (ALPHABET.indexOf(c) == -1) {
-                        //System.out.print(c);
                         lineaEncriptada.append(c);
                     } else {
                         //Se obtiene el índice que corresponde al caracter actual y se le suma key para
@@ -73,7 +97,6 @@ public class Cifrado {
                         if (iFrom > getMaxChars() - 1) {
                             iFrom = iFrom - getMaxChars();
                         }
-                        //System.out.print(ALPHABET.charAt(iFrom));
                         lineaEncriptada.append(ALPHABET.charAt(iFrom));
                     }
                 }
@@ -86,19 +109,16 @@ public class Cifrado {
     }
 
 
-    public void encriptarFileChanel(){
+    public void encriptarArchivo(){
         try(FileChannel inputChannel = FileChannel.open(this.pathArchivoOrigen);
-            FileChannel outChannel = FileChannel.open(Paths.get("c:\\test\\salida.txt"), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
+            FileChannel outChannel = FileChannel.open(this.pathArtchivoDestino, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
 
             ByteBuffer buffer = ByteBuffer.allocate(1024);
             StringBuilder content;
             while (inputChannel.read(buffer) > 0){
                 buffer.flip();
                 String data = new String(buffer.array(), buffer.position(), buffer.remaining(), Charset.forName("UTF-8"));
-                //content.append(data);
                 content = encriptar(data);
-
-
                 outChannel.write(ByteBuffer.wrap(content.toString().getBytes()));
 
                 buffer.clear();
@@ -111,7 +131,6 @@ public class Cifrado {
 
     private void generarClave(){
         Random random = new Random();
-
         //Se genera un número pseudoaleatorio entre 0 y la cantidad máxima de caracteres del alfabeto
         // menos 1, teniendo en cuenta que luego se sumará 1 para no tener en cuenta el cero.
         int rnd = random.nextInt(getMaxChars()-1);
@@ -119,7 +138,7 @@ public class Cifrado {
         this.key = rnd+1;
     }
 
-    public String decrypt(String enc_text, int shift){
+    public String desencriptar(String enc_text, int shift){
         String out = "";
         int iFrom;
         int key = shift % getMaxChars();
@@ -139,32 +158,52 @@ public class Cifrado {
         return out;
     }
 
-    public void decryptFileChanel(){
-        try(FileChannel inputChannel = FileChannel.open(Paths.get("c:\\test\\salida.txt"))) {
+    public StringBuilder desencriptarArchivo(int key){
+        try(FileChannel inputChannel = FileChannel.open(this.pathArchivoOrigen)) {
 
             ByteBuffer buffer = ByteBuffer.allocate(1024);
-            StringBuilder content = new StringBuilder();
+            StringBuilder contenido = new StringBuilder();
             while (inputChannel.read(buffer) > 0){
                 buffer.flip();
                 String data = new String(buffer.array(), buffer.position(), buffer.remaining(), Charset.forName("UTF-8"));
-                //content.append(data);
-                content.append(decrypt(data, this.key));
-
-
-                //outChannel.write(ByteBuffer.wrap(content.toString().getBytes()));
-
+                contenido.append(desencriptar(data, key));
                 buffer.clear();
             }
-            System.out.println(content);
+            return contenido;
         }catch (Exception e){
             e.printStackTrace();
         }
+        return null;
+    }
+
+    public StringBuilder desencriptarFuerzaBruta(){
+        StringBuilder sb;
+        int cantCoincidencias = 0, coincidencias, iProbable=0;
+        HashSet dic = this.diccionario();
+
+        for (int i = 1; i < this.getMaxChars(); i++) {
+            sb = desencriptarArchivo(i);
+            coincidencias = buscarPalabrasDiccionario(sb.toString().toLowerCase().split(" "));
+            if(coincidencias > cantCoincidencias){
+                cantCoincidencias = coincidencias;
+                iProbable = i;
+            }
+        }
+        return desencriptarArchivo(iProbable);
+    }
+
+    public int buscarPalabrasDiccionario(String[] palabras){
+        int coincidencias = 0;
+        for(String palabra : palabras){
+            coincidencias ++;
+        }
+        return coincidencias;
     }
 
     public String forzar(String text, int limit){
         String out = "";
         for(int i=1; i<= limit; i++){
-            out += decrypt(text, i);
+            out += desencriptar(text, i);
             out += "\t| Shift: " + i +"\n";
         }
         return out;

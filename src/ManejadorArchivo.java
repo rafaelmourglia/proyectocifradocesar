@@ -1,9 +1,7 @@
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.stream.Stream;
 public class ManejadorArchivo {
 
     /**
@@ -25,4 +23,16 @@ public class ManejadorArchivo {
             throw new InvalidPathException(e.getMessage(), "Error al especificar ruta al archivo o no es un archivo válido");
         }
     }
+
+    /**
+     * Cambia el nombre de archivo de un Path dado y retorna otro path con el nuevo nombre
+     * @param path Path del archivo original
+     * @param nuevoNombreArchivo Nuevo nombre del archivo
+     * @return
+     */
+    public static Path cambiarNombreArchivo(Path path, String nuevoNombreArchivo){
+        Path nuevoPath = path.getParent();
+        return nuevoPath.resolve(nuevoNombreArchivo);
+    }
+
 }

@@ -23,7 +23,7 @@ public class Main {
                     break;
                 case 2:
                     PantallaEncriptar dec = new PantallaEncriptar(scanner);
-                    dec.iniciarDesencriptado(scanner);
+                    dec.iniciarDesencriptado();
                     break;
                 case 0:
                     System.out.println("Cerrando programa...\nHasta la próxima!");
