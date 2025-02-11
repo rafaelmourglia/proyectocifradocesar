@@ -8,7 +8,7 @@ public class Main {
         do {
             System.out.println("Menú de opciones:\n" +
                     "\t1. Encriptar\n" +
-                    "\t2. Desencriptar\n" +
+                    "\t2. Desencriptar (Forzar)\n" +
                     "\t0. Salir\n" +
                     "Ingresar una opción: ");
 

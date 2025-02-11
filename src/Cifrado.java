@@ -2,7 +2,6 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 
@@ -11,49 +10,18 @@ public class Cifrado {
     private final String NOMBRE_ARCHIVO_DESTINO = "encriptado.txt";
     private Path pathArchivoOrigen;
     private Path pathArtchivoDestino;
+
+    //Le clave se obtiene siempre que se utiliza un método de encriptado o desencriptado
     private int key;
 
-    public HashSet diccionario(){
-        HashSet diccionario = new HashSet<>(Arrays.asList(
-                "el", "la", "de", "que", "y", "en", "a", "los", "se", "del", "las", "por",
-                "un", "para", "con", "no", "una", "su", "al", "es", "lo", "como", "más",
-                "pero", "sus", "le", "ya", "o", "fue", "este", "ha", "sí", "porque",
-                "esta", "entre", "cuando", "muy", "sin", "sobre", "también", "me",
-                "hasta", "hay", "donde", "quien", "desde", "todo", "nos", "durante",
-                "todos", "uno", "les", "ni", "contra", "otros", "ese", "eso", "ante",
-                "ellos", "esto", "mí", "antes", "algunos", "qué", "unos", "yo", "otro",
-                "otras", "otra", "él", "tanto", "esa", "estos", "tan", "luego", "cerca",
-                "ahí", "tiempo", "aún", "manera", "cada", "siempre", "solo", "palabras",
-                "nunca", "día", "ahora", "así", "después", "vida", "parte", "mundo",
-                "casa", "cosas", "lugar", "año", "caso", "gran", "poco", "agua",
-                "nuevo", "mujer", "hombre", "gente", "noche", "país", "trabajo",
-                "ciudad", "grupo", "historia", "cuenta", "medio", "ejemplo", "amigo",
-                "escuela", "forma", "familia", "número", "fuerza", "sistema", "niño", "niña",
-                "madre", "padre", "centro", "equipo", "tarde", "amor", "gobierno",
-                "programa", "sociedad", "perro", "gato", "tarde"
-        ));
-        return diccionario;
-
-    }
-
-    //Al crear un constructor sin parámetros se genera una clave de encriptado de forma automática y se guarda en key
-    //Se utiliza especialmente cuando se crea un objeto Cifrado para encriptar.
-    public Cifrado(){
-        generarClave();
-    }
-
-    //El constructor pide un parametro key cuando se conoce la clave.
-    //Se utiliza especialmente cuando se crea un objeto Cifrado para desencriptar.
-    public Cifrado(int key){
-        this.key = key;
-    }
     public Path getPathArchivoOrigen() {
         return pathArchivoOrigen;
     }
 
     public void setPathArchivoOrigen(Path pathArchivoOrigen) {
-
         this.pathArchivoOrigen = pathArchivoOrigen;
+        //El archivo de destino se designa automaticamente a partir del archivo de origen. De esto
+        //se encarga el método cambiarNombreArchivo
         this.pathArtchivoDestino = ManejadorArchivo.cambiarNombreArchivo(this.pathArchivoOrigen, NOMBRE_ARCHIVO_DESTINO);
     }
 
@@ -63,7 +31,7 @@ public class Cifrado {
 
 
 
-
+    //key sólo puede ser leído cuando se llama fuerna del objeto Cifrado
     public int getKey(){
         return this.key;
     }
@@ -74,14 +42,14 @@ public class Cifrado {
 
 
     /**
-     * Retorna un String donde para cada caracter del argumento text que corresponde a un
-     * índice i del alfabeto, devuelve el caracter que se encuentra en el índice i+shift.
-     * @return Texto encriptado aplicando cifrado César con clave shift
+     * Para cada caracter del parámetro línea que corresponde a un índice i del alfabeto,
+     * devuelve el caracter que se encuentra en el índice i + key.
+     * @return línea encriptada utilizando la clave key en un
      */
-    private StringBuilder encriptar(String linea){
+    private String encriptar(String linea){
          try {
             StringBuilder lineaEncriptada = new StringBuilder();
-            //lineas.forEach(linea -> {
+
                 int iFrom; //Especifica el índice desde donde se obtendrá el caracter cifrado
                 for (char c : linea.toCharArray()) {
                     //Si el caracter no existe en el alfabeto, se ignora y se agrega a la salida
@@ -100,8 +68,7 @@ public class Cifrado {
                         lineaEncriptada.append(ALPHABET.charAt(iFrom));
                     }
                 }
-            //});
-            return lineaEncriptada;
+            return lineaEncriptada.toString();
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -110,16 +77,20 @@ public class Cifrado {
 
 
     public void encriptarArchivo(){
+        this.generarClave();
         try(FileChannel inputChannel = FileChannel.open(this.pathArchivoOrigen);
             FileChannel outChannel = FileChannel.open(this.pathArtchivoDestino, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING, StandardOpenOption.WRITE)) {
 
             ByteBuffer buffer = ByteBuffer.allocate(1024);
-            StringBuilder content;
+            String contenido;
             while (inputChannel.read(buffer) > 0){
                 buffer.flip();
-                String data = new String(buffer.array(), buffer.position(), buffer.remaining(), Charset.forName("UTF-8"));
-                content = encriptar(data);
-                outChannel.write(ByteBuffer.wrap(content.toString().getBytes()));
+                //Al método encriptar se le pasa como parámetro un objeto String que contiene lo leído en el buffer.
+                //Para no generar "basura" se pasa exactamente la cantidad de caracteres leídos (remaining) donde
+                //por defecto es 1024, pero puede no ser así en caso de que se trate de la última línea leída del
+                //archivo o que el archivo contencia menos de 1024 caracteres.
+                contenido = encriptar(new String(buffer.array(), buffer.position(), buffer.remaining(), Charset.forName("UTF-8")));
+                outChannel.write(ByteBuffer.wrap(contenido.toString().getBytes()));
 
                 buffer.clear();
             }
@@ -159,6 +130,7 @@ public class Cifrado {
     }
 
     public StringBuilder desencriptarArchivo(int key){
+        this.key = key;
         try(FileChannel inputChannel = FileChannel.open(this.pathArchivoOrigen)) {
 
             ByteBuffer buffer = ByteBuffer.allocate(1024);
@@ -174,6 +146,29 @@ public class Cifrado {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private HashSet diccionario(){
+        HashSet diccionario = new HashSet<>(Arrays.asList(
+                "el", "la", "de", "que", "y", "en", "a", "los", "se", "del", "las", "por",
+                "un", "para", "con", "no", "una", "su", "al", "es", "lo", "como", "más",
+                "pero", "sus", "le", "ya", "o", "fue", "este", "ha", "sí", "porque",
+                "esta", "entre", "cuando", "muy", "sin", "sobre", "también", "me",
+                "hasta", "hay", "donde", "quien", "desde", "todo", "nos", "durante",
+                "todos", "uno", "les", "ni", "contra", "otros", "ese", "eso", "ante",
+                "ellos", "esto", "mí", "antes", "algunos", "qué", "unos", "yo", "otro",
+                "otras", "otra", "él", "tanto", "esa", "estos", "tan", "luego", "cerca",
+                "ahí", "tiempo", "aún", "manera", "cada", "siempre", "solo", "palabras",
+                "nunca", "día", "ahora", "así", "después", "vida", "parte", "mundo",
+                "casa", "cosas", "lugar", "año", "caso", "gran", "poco", "agua",
+                "nuevo", "mujer", "hombre", "gente", "noche", "país", "trabajo",
+                "ciudad", "grupo", "historia", "cuenta", "medio", "ejemplo", "amigo",
+                "escuela", "forma", "familia", "número", "fuerza", "sistema", "niño", "niña",
+                "madre", "padre", "centro", "equipo", "tarde", "amor", "gobierno",
+                "programa", "sociedad", "perro", "gato", "tarde"
+        ));
+        return diccionario;
+
     }
 
     public StringBuilder desencriptarFuerzaBruta(){
