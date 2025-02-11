@@ -1,6 +1,11 @@
 import java.util.Scanner;
 
 public class Main {
+    /**
+     * El método main sólo maneja el menú de opciones. La lógica de cada opción
+     * se deja a cargo de la clase PantallaEncriptar.
+     * @param args
+     */
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         try{

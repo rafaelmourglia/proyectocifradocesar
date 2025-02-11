@@ -75,7 +75,10 @@ public class Cifrado {
         return null;
     }
 
-
+    /**
+     * Encripta el archivo que se encuentra en pathArchivoOrigen y guarda el mismo erchivo encriptado
+     * en la misma ubicación con el nombre 'encriptado.txt'
+     */
     public void encriptarArchivo(){
         this.generarClave();
         try(FileChannel inputChannel = FileChannel.open(this.pathArchivoOrigen);
@@ -100,6 +103,10 @@ public class Cifrado {
 
     }
 
+    /**
+     * Genera una clave de encriptado de forma aleatoria entre 1 y la cantidad máxima de caracteres.
+     * La clave generada se guarda en la propiedad key.
+     */
     private void generarClave(){
         Random random = new Random();
         //Se genera un número pseudoaleatorio entre 0 y la cantidad máxima de caracteres del alfabeto
@@ -109,10 +116,15 @@ public class Cifrado {
         this.key = rnd+1;
     }
 
-    public String desencriptar(String enc_text, int shift){
+    /**
+     * Desencripta un texto pasado como parámetro con la clave especificada.
+     * @param enc_text texto a desencriptar
+     * @param key clave para desencriptar
+     * @return texto desencriptado
+     */
+    public String desencriptar(String enc_text, int key){
         String out = "";
         int iFrom;
-        int key = shift % getMaxChars();
         for(char c : enc_text.toCharArray()){
             if(ALPHABET.indexOf(c) == -1){
                 out += c;
@@ -129,7 +141,14 @@ public class Cifrado {
         return out;
     }
 
+    /**
+     * Desencripta el archivo ubicado en pathArchivoOrigen utilizando la clave key
+     * @param key clave de desencriptación
+     * @return archivo desencriptado cargado en un StringBuilder
+     */
     public StringBuilder desencriptarArchivo(int key){
+        //Se actualiza la clave del objeto Cifrado. Esto permite que luego de ejecutar esta función,
+        //sea posible obtener que clave se utilizó en el proceso.
         this.key = key;
         try(FileChannel inputChannel = FileChannel.open(this.pathArchivoOrigen)) {
 
@@ -137,8 +156,9 @@ public class Cifrado {
             StringBuilder contenido = new StringBuilder();
             while (inputChannel.read(buffer) > 0){
                 buffer.flip();
-                String data = new String(buffer.array(), buffer.position(), buffer.remaining(), Charset.forName("UTF-8"));
-                contenido.append(desencriptar(data, key));
+                //Se crea un objeto String tomando el buffer leído y leyendo sólo los caracteres válidos (remaining)
+                String texto = new String(buffer.array(), buffer.position(), buffer.remaining(), Charset.forName("UTF-8"));
+                contenido.append(desencriptar(texto, key));
                 buffer.clear();
             }
             return contenido;
@@ -148,6 +168,10 @@ public class Cifrado {
         return null;
     }
 
+    /**
+     * Diccionario que contiene una lista de palabras comunes al idioma español.
+     * @return HashSet con el diccionario de palabras
+     */
     private HashSet diccionario(){
         HashSet diccionario = new HashSet<>(Arrays.asList(
                 "el", "la", "de", "que", "y", "en", "a", "los", "se", "del", "las", "por",
@@ -171,6 +195,11 @@ public class Cifrado {
 
     }
 
+    /**
+     * Desencripta un archivo aplicando fuerza bruta. Para esto comprueba todas las claves posibles
+     * comenzando desde 1 hasta la cantidad máxima de caracteres.
+     * @return Archivo completo desencriptado cargado en un StringBuilder
+     */
     public StringBuilder desencriptarFuerzaBruta(){
         StringBuilder sb;
         int cantCoincidencias = 0, coincidencias, iProbable=0;
@@ -178,6 +207,7 @@ public class Cifrado {
 
         for (int i = 1; i < this.getMaxChars(); i++) {
             sb = desencriptarArchivo(i);
+
             coincidencias = buscarPalabrasDiccionario(sb.toString().toLowerCase().split(" "));
             if(coincidencias > cantCoincidencias){
                 cantCoincidencias = coincidencias;
@@ -187,20 +217,17 @@ public class Cifrado {
         return desencriptarArchivo(iProbable);
     }
 
+    /**
+     * Para cada palabra del array de String, busca si existe en el diccionario, contando las
+     * coincidencias encontradas.
+     * @param palabras Array de palabras.
+     * @return Coincidencias encontradas.
+     */
     public int buscarPalabrasDiccionario(String[] palabras){
         int coincidencias = 0;
         for(String palabra : palabras){
             coincidencias ++;
         }
         return coincidencias;
-    }
-
-    public String forzar(String text, int limit){
-        String out = "";
-        for(int i=1; i<= limit; i++){
-            out += desencriptar(text, i);
-            out += "\t| Shift: " + i +"\n";
-        }
-        return out;
     }
 }
